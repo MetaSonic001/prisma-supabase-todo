@@ -1,0 +1,11 @@
+-- CreateEnum
+CREATE TYPE "Priority" AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+
+-- AlterTable
+ALTER TABLE "Todo" 
+ADD COLUMN "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN "description" TEXT,
+ADD COLUMN "labels" TEXT[],
+ADD COLUMN "priority" "Priority" NOT NULL DEFAULT 'LOW',
+ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Set default to CURRENT_TIMESTAMP
+ADD COLUMN "userId" TEXT DEFAULT NULL; -- Make `userId` nullable for now
