@@ -5,6 +5,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitAny": false, // Disables errors for 'any' types
     "noEmit": false,
     "noEmitOnError": false,  // Add this line
     "esModuleInterop": true,
@@ -25,6 +26,6 @@
     "noUnusedLocals": false,  // Optional: add to ignore unused local errors
     "noUnusedParameters": false // Optional: add to ignore unused parameter errors
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/actions/addTodo.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/actions/addTodo.js", "next.config.js"],
   "exclude": ["node_modules"]
 }

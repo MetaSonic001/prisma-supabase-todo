@@ -1,37 +1,69 @@
 'use client'
 
+import { Priority } from '@/app/types'
 import { Button } from '@/components/ui/button'
 import { DatePickerDemo } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export function TodoForm() {
   const router = useRouter()
+  const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState('LOW')
+  const [priority, setPriority] = useState<Priority>(Priority.LOW)
   const [dueDate, setDueDate] = useState<Date | null>(null)
   const [labels, setLabels] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-  
-    await fetch(`/api/todos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, priority, dueDate, labels })
-    })
-  
-    setTitle('')
-    setDescription('')
-    setPriority('LOW')
-    setDueDate(null)
-    setLabels([])
-    router.refresh()
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          priority,
+          dueDate: dueDate?.toISOString(),
+          labels
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create todo')
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Task created successfully'
+      })
+
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setPriority(Priority.LOW)
+      setDueDate(null)
+      setLabels([])
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create task',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -63,11 +95,11 @@ export function TodoForm() {
           <Select
             id="priority"
             value={priority}
-            onValueChange={setPriority}
+            onValueChange={(value: Priority) => setPriority(value)}
           >
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
+            {Object.values(Priority).map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
           </Select>
         </div>
 
@@ -85,12 +117,14 @@ export function TodoForm() {
           <Input
             id="labels"
             placeholder="Add labels (comma-separated)"
-            onChange={(e) => setLabels(e.target.value.split(',').map(label => label.trim()))}
+            onChange={(e) => setLabels(e.target.value.split(',').map(label => label.trim()).filter(Boolean))}
           />
         </div>
       </div>
 
-      <Button type="submit" className="w-full">Add Task</Button>
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? 'Adding Task...' : 'Add Task'}
+      </Button>
     </form>
   )
 }

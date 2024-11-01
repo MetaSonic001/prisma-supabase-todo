@@ -14,10 +14,12 @@
     completed   Boolean   @default(false)
     priority    Priority  @default(LOW)
     dueDate     DateTime?
-    labels      String[]
-    userId      String?   // Make this optional for now
+    labels      String[]  @default([])  // Add default empty array
+    userId      String?   // Consider making this required once auth is fully implemented
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
+
+    @@index([userId])  // Add index for better query performance
   }
 
   enum Priority {

@@ -1,6 +1,9 @@
+'use client'
+
 import type { Todo } from '@/app/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 
@@ -10,22 +13,66 @@ interface TodoItemProps {
 }
 
 export function TodoItem({ todo, onUpdate }: TodoItemProps) {
+  const { toast } = useToast()
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleComplete = async () => {
-    await fetch(`/api/todos/${todo.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: !todo.completed })
-    })
-    onUpdate()
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/todos/${todo.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !todo.completed })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update todo')
+      }
+
+      onUpdate()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update task',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
-  
+
   const handleDelete = async () => {
-    await fetch(`/api/todos/${todo.id}`, { method: 'DELETE' })
-    onUpdate()
+    if (!confirm('Are you sure you want to delete this task?')) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/todos/${todo.id}`, { 
+        method: 'DELETE' 
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete todo')
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Task deleted successfully'
+      })
+      onUpdate()
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete task',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
-  
+
   return (
     <motion.li
       layout
